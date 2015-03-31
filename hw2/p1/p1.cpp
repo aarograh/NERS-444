@@ -2,13 +2,11 @@
 // COURSE     : NERS 544
 // ASSIGNMENT : Homework 2
 // PROBLEM    : Problem 1
-// DATE       : February 23, 2015
+// DATE       : March 31, 2015
 
 #define PI 3.14159265358979323
 #define SIGMA 0.35
 #define C 1.05078216355812
-//#define NORM 1.029149923805585
-//#define NORMX2 0.1211987601379424
 
 #include<iostream>
 #include<cstdlib>
