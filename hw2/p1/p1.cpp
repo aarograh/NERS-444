@@ -6,9 +6,9 @@
 
 #define PI 3.14159265358979323
 #define SIGMA 0.35
-#define C 1.033568152688034
-#define NORM 1.029149923805585
-#define NORMX2 0.1211987601379424
+#define C 1.05078216355812
+//#define NORM 1.029149923805585
+//#define NORMX2 0.1211987601379424
 
 #include<iostream>
 #include<cstdlib>
@@ -24,24 +24,18 @@ double normRand(void)
 
 double sample(void)
 {
-  if (normRand() > 0.5)
-  {
-    return sqrt(-2.0*pow(0.35,2.0)*log(0.35*sqrt(2.0*PI)*normRand()));
-  }
-  else
-  {
-    return -sqrt(-2.0*pow(0.35,2.0)*log(0.35*sqrt(2.0*PI)*normRand()));
-  }
+  return SIGMA*sqrt(-2.0*log(normRand()))*cos(2.0*PI*normRand());
 }
 
-double boundEval(double x)
+double g(double x)
 {
-  return exp(-(pow(x,2.0))/(2.0*(pow(SIGMA,2.0))))/(SIGMA*sqrt(2.0*PI));
+  return exp(-(x*x)/(2.0*SIGMA*SIGMA))/(SIGMA*sqrt(2.0*PI));
 }
 
-double funcEval(double x)
+double f(double x)
 {
-  return pow(cos(PI*x/2.0),3.0);
+  double tmp = cos(PI*x/2.0);
+  return (3.0*PI/8.0)*tmp*tmp*tmp;
 }
 
 int main()
@@ -49,27 +43,26 @@ int main()
   srand(time(NULL));
 
   double x, y, test, bound, Ex2 = 0.0;
-  int N = 1e6, count = 0, i;
+  int N = 1e6, i;
+  bool picking = false;
 
   for (i = 0; i < N; i++)
   {
-    x = sample();
-    y = funcEval(x);
-    bound = boundEval(x);
-    test = normRand()*C*bound;
-    if (test <= y)
+    picking = true;
+    while (picking)
     {
-      Ex2 += x*x;
-      count++;
+      x = sample();
+      y = f(x);
+      bound = g(x);
+      test = normRand()*C*bound;
+      if (test <= y) picking = false;
     }
-//cout << test << "  " << y << "  " << bound << "  " << "  " << x << "  " << Ex2 << endl;
+    Ex2 += x*x;
   }
 
-  Ex2 = NORMX2*static_cast<double>(count)/static_cast<double>(N);
-//  Ex2 /= static_cast<double>(count);
+  Ex2 /= static_cast<double>(N);
 
-  cout << "After " << N << " iterations, " << count << " values were accepted "
-    << "and give an estimate of E[X^2]=" << Ex2 << "." << endl;
+  cout << "After " << N << " iterations, E[X^2]=" << Ex2 << "." << endl;
 
   return 0;
 
