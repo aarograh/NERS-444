@@ -2,42 +2,62 @@
 // COURSE     : NERS 544
 // ASSIGNMENT : Homework 2
 // PROBLEM    : Problem 4
-// DATE       : February 23, 2015
+// DATE       : April 1, 2015
+
+#define PI 3.14159265358979323
 
 #include<iostream>
+#include<cstdlib>
+#include<time.h>
 #include<cmath>
 
 using namespace std;
+
+double normRand(void)
+{
+  return static_cast<double>(rand())/static_cast<double>(RAND_MAX);
+}
 
 int main(void)
 {
 
   const int N=1e6;
-  int n, i, C;
+  double Ex[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
+  double tau, x;
 
-  cout << "Input exponent n: " << endl;
-  cin >> n;
-
-  switch(n)
+  for (int n = 0; n < 5; n++)
   {
-    case 0:
-      break;
-    case 1:
-      break;
-    case 2:
-      break;
-    case 3:
-      break;
-    case 4:
-      break;
-    default:
-      cout << "Error! Invalid exponent " << n << " passed to program!" << endl;
-      return -1;
-  }
-
-  for (i = 0; i < N; i++)
-  {
-    
+    // Even n
+    if (n%2 == 0)
+    {
+      for (int i = 0; i < N; i++)
+      {
+        tau = sqrt(-log(normRand()))*cos(2.0*PI*normRand());
+        x = 1.0;
+        for (int k = 0; k < n/2; k++)
+        {
+          x *= normRand();
+        }
+        x = sqrt(-log(x) + tau*tau);
+        Ex[n] += x;
+      }
+    }
+    // Odd n
+    else
+    {
+      for (int i = 0; i < N; i++)
+      {
+        x = 1.0;
+        for (int k = 0; k < (n+1)/2; k++)
+        {
+          x *= normRand();
+        }
+        x = sqrt(-log(x));
+        Ex[n] += x;
+      }
+    }
+    Ex[n] /= N;
+    cout << "For n=" << n << ", E[x]=" << Ex[n] << "." << endl;
   }
 
   return 0;
