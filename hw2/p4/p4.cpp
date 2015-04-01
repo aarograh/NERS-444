@@ -10,6 +10,7 @@
 #include<cstdlib>
 #include<time.h>
 #include<cmath>
+#include<iomanip>
 
 using namespace std;
 
@@ -57,7 +58,7 @@ int main(void)
       }
     }
     Ex[n] /= N;
-    cout << "For n=" << n << ", E[x]=" << Ex[n] << "." << endl;
+    cout << "For n=" << n << ", E[x]=" << setprecision(9) << Ex[n] << endl;
   }
 
   return 0;
