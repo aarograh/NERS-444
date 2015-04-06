@@ -15,7 +15,7 @@ using namespace std;
 
 double M = 1.0;
 double invM = 1.0;
-const double thickness = 3.0;
+const double thickness = 51.0;
 const double halfthickness = thickness/2.0;
 const double c = 0.6;
 const double eps = 100.0*DBL_EPSILON;
@@ -24,7 +24,7 @@ const double eps = 100.0*DBL_EPSILON;
 double normRand(void)
 {
   return static_cast<double>(rand())/static_cast<double>(RAND_MAX);
-}
+} // End normRand()
 
 // Define a particle class
 class particle {
@@ -36,7 +36,7 @@ class particle {
     double roulette();
     double x, mu, weight;
     bool isAlive;
-};
+}; // End class particle
 
 // Particle is always initialized in center of problem with weight
 // 1.0 and a random, isotropic mu.
@@ -46,7 +46,7 @@ particle::particle (double x_in, double mu_in, double weight_in)
   mu = mu_in;
   weight = weight_in;
   isAlive = true;
-}
+} // End particle::particle
 
 // Simulates the entire life of a particle
 double particle::simulate ()
@@ -60,7 +60,7 @@ double particle::simulate ()
 //cout << setprecision(19) << x << " " << mu << endl;
   }
   return result;
-}
+} // End particle::simulate
 
 // Transport the particle.
 //   Determines which is closer: the next surface or next collision.
@@ -70,6 +70,7 @@ double particle::simulate ()
 //       direction.
 double particle::transport ()
 {
+  double result = 0.0;
   // Get distances
   double d2surf = x - ((long)x);;
   if(mu > 0.0) d2surf = 1.0 - d2surf;
@@ -88,13 +89,13 @@ double particle::transport ()
       if ((long)x == 0)
       {
         isAlive = false;
-cout << "Wrong side" << endl;
-        return 0.0;
+//cout << "Wrong side" << endl;
+        result = 0.0;
       }
       // Particle is still in the slab
       else
       {
-        return roulette();
+        result = roulette();
       }
     }
     // Moving right
@@ -105,13 +106,13 @@ cout << "Wrong side" << endl;
       if (x > thickness)
       {
         isAlive = false;
-cout << "Particle Escaped!" << endl;
-        return weight;
+//cout << "Particle Escaped!" << endl;
+        result = weight;
       }
       // Particle is still in slab
       else
       {
-        return split();
+        result = split();
       }
     }
   }
@@ -123,16 +124,18 @@ cout << "Particle Escaped!" << endl;
     if (normRand() < c)
     {
       mu = 2.0*normRand() - 1.0;
-      return weight;
+      result = weight;
     }
     // Particle is absorbed
     else
     {
       isAlive = false;
-      return 0.0;
+      result = 0.0;
     }
   }
-}
+
+  return result;
+}  // End particle::transport
 
 double particle::roulette ()
 {
@@ -146,7 +149,7 @@ double particle::roulette ()
     weight *= M;
   }
   return weight;
-}
+} // End particle::roulette
 
 double particle::split ()
 {
@@ -154,22 +157,20 @@ double particle::split ()
   double result = 0.0;
   int nSplits = floor(M + normRand());
   double splitWeight = weight/((double)nSplits);
-cout << "splitting into " << nSplits << " particles with weight " << splitWeight << endl;
   for (int i = 0; i < nSplits; i++)
   {
     particle subPart(x,mu,splitWeight);
     result += subPart.simulate();
   }
-cout << "splitting results: " << result << endl;
   return result; 
-}
+} // End particle::split
 
 int main()
 {
   srand(time(NULL));
 
   int nSamples = 0;
-  int result = 0;
+  double result = 0.0;
   double mean = 0.0;
   double meansq = 0.0;
 
@@ -181,7 +182,7 @@ int main()
 
   for (int i = 0; i < nSamples; i++)
   {
-    if (i%(nSamples/10) == 0)
+    if (i%(nSamples/1000) == 0)
     {
       cout << "Simulating particle " << i << endl;
     }
@@ -204,4 +205,4 @@ int main()
   cout << "FOM = " << setprecision(10) << FOM << endl;
 
   return 0;
-}
+} // End main
