@@ -4,6 +4,8 @@
 // PROBLEM    : Problem 1
 // DATE       : April 20, 2015
 
+#define PI 3.14159265358979323
+
 #include<iostream>
 #include<cstdlib>
 #include<time.h>
@@ -13,51 +15,64 @@
 
 using namespace std;
 
+bool implicitCapture = false;
+bool weightRoulette = false;
 double M = 1.0;
 double invM = 1.0;
 const double thickness = 51.0;
+const int nCells = static_cast<int>(thickness);
 const double halfthickness = thickness/2.0;
 const double c = 0.6;
 const double eps = 100.0*DBL_EPSILON;
+double importances[51];
 
 // Random number generator on [0,1]
-double normRand(void)
+double drand(void)
 {
   return static_cast<double>(rand())/static_cast<double>(RAND_MAX);
-} // End normRand()
+} // End drand()
 
 // Define a particle class
 class particle {
   public:
+    // Public methods:
     particle(double, double, double);
     double simulate();
+    // Other public attributes
+    int nTracks;
+  private:
+    // Private methods
     double transport();
     double split();
-    double roulette();
-    double x, mu, weight;
+    void roulette();
+    void weight_roulette();
+    void scatter();
+    // Other private attributes
     bool isAlive;
+    double x, omegaZ, weight;
 }; // End class particle
 
 // Particle is always initialized in center of problem with weight
 // 1.0 and a random, isotropic mu.
-particle::particle (double x_in, double mu_in, double weight_in)
+particle::particle (double x_in, double omegaZ_in, double weight_in)
 {
   x = x_in;
-  mu = mu_in;
+  omegaZ = omegaZ_in;
   weight = weight_in;
+  nTracks = 1;
   isAlive = true;
 } // End particle::particle
 
 // Simulates the entire life of a particle
 double particle::simulate ()
 {
-//cout << endl << "New Particle" << endl;
   double result = 0.0;
-//cout << x << " " << mu << endl;
+  // Loop over the particle's life
   while (isAlive)
   {
+    // Simulate a single track of the particle's life
     result = transport();
-//cout << setprecision(19) << x << " " << mu << endl;
+    // Perform weight rouletting if requested by user
   }
   return result;
 } // End particle::simulate
@@ -70,32 +85,29 @@ double particle::simulate ()
 //       direction.
 double particle::transport ()
 {
+  nTracks += 1; // Increment the number of tracks for this particle
   double result = 0.0;
   // Get distances
-  double d2surf = x - ((long)x);;
-  if(mu > 0.0) d2surf = 1.0 - d2surf;
-  double d2coll = -abs(mu)*log(normRand()) ;
+  double d2surf = x - ((long)x);
+  if(omegaZ > 0.0) d2surf = 1.0 - d2surf;
+  double d2coll = -abs(omegaZ)*log(drand());
 
   // Particle makes it to next cell
-//cout << d2surf << "            " << d2coll << endl;
   if (d2surf < d2coll)
   {
     // Moving left
-    if (mu < 0)
+    if (omegaZ < 0)
     {
-//cout << x << "  " << ((double)((long)x)) << " " << eps << endl;
       x = ((double)((long)x)) - eps;
       // Particle escapes the left side of the slab
       if ((long)x == 0)
       {
         isAlive = false;
-//cout << "Wrong side" << endl;
-        result = 0.0;
       }
       // Particle is still in the slab
       else
       {
-        result = roulette();
+        roulette();
       }
     }
     // Moving right
@@ -106,7 +118,6 @@ double particle::transport ()
       if (x > thickness)
       {
         isAlive = false;
-//cout << "Particle Escaped!" << endl;
         result = weight;
       }
       // Particle is still in slab
@@ -119,27 +130,47 @@ double particle::transport ()
   // Collision occurs within current cell
   else
   {
-    x += ((mu > 0.0) - (mu < 0.0))*d2coll;
-    // Particle scatters
-    if (normRand() < c)
+    x += ((omegaZ > 0.0) - (omegaZ < 0.0))*d2coll;
+    // Implicit capture is turned on
+    if (implicitCapture)
     {
-      mu = 2.0*normRand() - 1.0;
-      result = weight;
+      scatter();
+      weight = weight*c;
+      if (weightRoulette) 
+      {
+        weight_roulette();
+      }
     }
-    // Particle is absorbed
     else
     {
-      isAlive = false;
-      result = 0.0;
+      // Particle scatters
+      if (drand() < c)
+      {
+        scatter();
+      }
+      // Particle is absorbed
+      else
+      {
+        isAlive = false;
+      }
     }
   }
 
   return result;
 }  // End particle::transport
 
-double particle::roulette ()
+//Performs isotropic lab-frame scattering
+void particle::scatter()
 {
-  if (normRand() > invM)
+  double gamma = drand()*PI; //Gamma
+  double mu = drand()*2.0 - 1.0; //mu
+  omegaZ = mu*omegaZ + cos(gamma)*sqrt((1.0 - mu*mu)*(1.0-omegaZ*omegaZ));
+} // End particle::scatter
+
+// Performs rouletting based on cell importances
+void particle::roulette ()
+{
+  if (drand() > invM)
   {
     isAlive = false;
     weight = 0.0;
@@ -148,60 +179,108 @@ double particle::roulette ()
   {
     weight *= M;
   }
-  return weight;
 } // End particle::roulette
 
+// Performs splitting based on cell importances
 double particle::split ()
 {
   isAlive = false;
   double result = 0.0;
-  int nSplits = floor(M + normRand());
+  int nSplits = floor(M + drand());
   double splitWeight = weight/((double)nSplits);
   for (int i = 0; i < nSplits; i++)
   {
-    particle subPart(x,mu,splitWeight);
+    particle subPart(x,omegaZ,splitWeight);
     result += subPart.simulate();
+    nTracks += subPart.nTracks;
   }
   return result; 
 } // End particle::split
 
+// Performs weight rouletting
+void particle::weight_roulette ()
+{ 
+  if (weight < 0.1/importances[(int) x])
+  {
+    double weight_survive = 0.4/importances[(int) x];
+    double prob_survive = weight/weight_survive;
+    // Particle survives
+    if (drand() < prob_survive)
+    {
+      weight = weight_survive;
+    }
+    else
+    {
+      isAlive = false;
+      weight = 0.0;
+    }
+  }
+} // End particle::weight_roulette
+
 int main()
 {
+  // Seed Random Number Generator
   srand(time(NULL));
 
+  // Declare variables
   int nSamples = 0;
+  int nTracks = 0;
   double result = 0.0;
   double mean = 0.0;
   double meansq = 0.0;
+  double variance = 0.0;
+  double FOM = 0.0;
 
+  // Read in input values
   cout << "Set number of samples: N=";
   cin >> nSamples;
   cout << "Set a value: M=";
   cin >> M;
   invM = 1.0/M;
+  cout << "Use implicit capture (1 == on, 0 == off)? ";
+  cin >> implicitCapture;
+  cout << "Use weight rouletting (1 == on, 0 == off)? ";
+  cin >> weightRoulette;
 
+  // Setup array of cell importances
+  importances[nCells/2] = 1.0;
+  for (int i = nCells/2 + 1; i < nCells; i++)
+  {
+    importances[i] = importances[i-1]*M;
+  }
+  for (int i = nCells/2 - 1; i >= 0; i--)
+  {
+    importances[i] = importances[i+1]*invM;
+  }
+
+  // Sample neutrons
   for (int i = 0; i < nSamples; i++)
   {
     if (i%(nSamples/1000) == 0)
     {
       cout << "Simulating particle " << i << endl;
     }
-    particle part(halfthickness,2.0*normRand()-1.0,1.0);
+    particle part(halfthickness,2.0*drand()-1.0,1.0);
     result = part.simulate();
-    // Accumulate mean and squared mean
+    // Accumulate results
     mean += result;
     meansq += result*result;
+    nTracks += part.nTracks;
   }
 
+  // Calculate mean, variance, and figure of merit
   mean /= nSamples;
   meansq /= nSamples;
-  double variance = meansq - mean*mean;
-  double FOM  = sqrt(variance)/(mean*nSamples);
-  FOM = 1.0/(FOM*FOM*((double)sqrt(nSamples)));
+  variance = meansq - mean*mean;
+  FOM  = sqrt(variance)/(mean*nSamples);
+  FOM = 1.0/(FOM*FOM*nTracks);
 
   cout << "Mean = " << setprecision(10) << mean << endl;
   cout << "Mean^2 = " << setprecision(10) << meansq << endl;
+  cout << "Number of tracks = " << nTracks << endl;
   cout << "Variance = " << setprecision(10) << variance << endl;
+  cout << "Relative Uncertainty = " << setprecision(10) <<
+    sqrt(variance)/(mean*sqrt(static_cast<double>(nSamples))) << endl;
   cout << "FOM = " << setprecision(10) << FOM << endl;
 
   return 0;
