@@ -2,7 +2,7 @@
 // COURSE     : NERS 544
 // ASSIGNMENT : Homework 4
 // PROBLEM    : Problem 1
-// DATE       : April 20, 2015
+// DATE       : April 23, 2015
 
 #define PI 3.14159265358979323
 

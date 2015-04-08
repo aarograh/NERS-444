@@ -2,7 +2,7 @@
 // COURSE     : NERS 544
 // ASSIGNMENT : Homework 4
 // PROBLEM    : Problem 2
-// DATE       : April 20, 2015
+// DATE       : April 23, 2015
 
 #define B2 0.079407543572005
 #define PI 3.14159265358979323
@@ -54,7 +54,6 @@ int main(void)
   AR = sigma_KN(1.0, 1.0);
   pL = AL/(AL + AR);
   pR = 1.0 - pL;
-cout << AL << " " << AR << " " << pL << " " << pR << endl;
 
   for (int i = 0; i < nAccepted; i++)
   {
