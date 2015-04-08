@@ -73,6 +73,10 @@ double particle::simulate ()
     // Simulate a single track of the particle's life
     result = transport();
     // Perform weight rouletting if requested by user
+    if (weightRoulette) 
+    {
+      weight_roulette();
+    }
   }
   return result;
 } // End particle::simulate
@@ -85,7 +89,7 @@ double particle::simulate ()
 //       direction.
 double particle::transport ()
 {
-  nTracks += 1; // Increment the number of tracks for this particle
+  nTracks++; // Increment the number of tracks for this particle
   double result = 0.0;
   // Get distances
   double d2surf = x - ((long)x);
@@ -136,10 +140,6 @@ double particle::transport ()
     {
       scatter();
       weight = weight*c;
-      if (weightRoulette) 
-      {
-        weight_roulette();
-      }
     }
     else
     {
@@ -224,7 +224,7 @@ int main()
 
   // Declare variables
   int nSamples = 0;
-  int nTracks = 0;
+  long nTracks = 0;
   double result = 0.0;
   double mean = 0.0;
   double meansq = 0.0;
