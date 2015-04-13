@@ -86,6 +86,7 @@ int main(void)
     }
   }
 
+  cout << "x  Reference  Mean  Uncertainty" << endl;
   for (int i = 0; i < nbins; i++)
   {
     position = static_cast<double>(i)/static_cast<double>(nbins)*xEnd+0.025;
@@ -96,8 +97,8 @@ int main(void)
     reference[i] = analytic(position,tEnd);
     if (i == 0) norm = reference[0]/mean[0];
     mean[i] *= norm;
-    cout << "x = " << position << " : Reference = " << reference[i] << 
-      ",  Mean = " << mean[i] << ", Uncertainty = " << uncertainty[i] << endl;
+    cout << position << "  " << reference[i] <<       "  " << mean[i] << "  " 
+      << uncertainty[i] << endl;
   }
 
   return 0;
